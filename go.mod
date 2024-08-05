@@ -1,9 +1,10 @@
-module github.com/ottersome/ttgo.git
+module github.com/ottersome/ttgo
 
 go 1.22.5
 
+require github.com/charmbracelet/bubbletea v0.26.6
+
 require (
-	github.com/charmbracelet/bubbletea v0.26.6 // indirect
 	github.com/charmbracelet/x/ansi v0.1.2 // indirect
 	github.com/charmbracelet/x/input v0.1.0 // indirect
 	github.com/charmbracelet/x/term v0.1.1 // indirect
