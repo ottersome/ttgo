@@ -1,21 +1,27 @@
 package main
 
 import (
-  "fmt"
   "github.com/charmbracelet/bubbletea"
+  "time"
+)
+
+type MODES int
+const (
+  CM_CLOCK = iota
+  CM_MENU
 )
 
 type model struct {
-  choices []string
-  cursor int
-  selected map[int]struct{}
+  current_mode MODES
+  currenct_clock clock
 }
 
 func InitialModel() model {
+  // Get Current time
+  cur_time := time.Now()
   return model{
-    choices: []string{"a", "b", "c"},
-    cursor: 0,
-    selected: make(map[int]struct{}),
+    CM_CLOCK,
+    clock{hour: cur_time.Hour(), minute: cur_time.Minute(), seconds: cur_time.Second()},
   }
 }
 
@@ -29,18 +35,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
     switch msg.String() {
     case "q":
       return m, tea.Quit
-    case "down":
-      m.cursor++
-      if m.cursor >= len(m.choices) {
-        m.cursor = 0
-      }
-    case "up":
-      m.cursor--
-      if m.cursor < 0 {
-        m.cursor = len(m.choices) - 1
-      }
-    case "enter":
-      m.selected[m.cursor] = struct{}{}
     }
   }
 
@@ -56,6 +50,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
   return m, tea.Batch(cmds...)
 }
 
+
 func (m model) View() string {
-  return fmt.Sprintf("Choices: %v\nCursor: %v\nSelected: %v", m.choices, m.cursor, m.selected)
+  // Use Clock to get current time
+  // Update the clock
+  time_now := time.Now()
+  m.currenct_clock.hour = time_now.Hour()
+  m.currenct_clock.minute = time_now.Minute()
+  m.currenct_clock.seconds = time_now.Second()
+
+  // Render the clock
+  final_time_str := m.currenct_clock.get_string()
+  return final_time_str
 }
