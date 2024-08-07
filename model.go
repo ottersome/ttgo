@@ -2,7 +2,10 @@ package main
 
 import (
   "github.com/charmbracelet/bubbletea"
+  "github.com/charmbracelet/lipgloss"
   "time"
+  "os"
+  "golang.org/x/term"
 )
 
 type MODES int
@@ -68,5 +71,25 @@ func (m model) View() string {
 
   // Render the clock.
   final_time_str := m.currenct_clock.get_string()
-  return final_time_str
+
+  //Get Terminal Dimensions
+  var width, height int
+  if term.IsTerminal(int(os.Stdout.Fd())) {
+    _w, _h, _e := term.GetSize(int(os.Stdout.Fd()))
+    width = _w - 2
+    height = _h - 2
+    if _e != nil {
+      panic(_e)
+    }
+  }
+
+  centered := lipgloss.NewStyle().
+    Width(width).
+    Height(height).
+    Align(lipgloss.Center, lipgloss.Center).
+    Padding(1).
+    Border(lipgloss.RoundedBorder()).
+    Render(final_time_str)
+
+  return centered
 }
