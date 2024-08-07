@@ -26,7 +26,7 @@ type Settings struct{
   terminal_colors map[SW_STATES]string
 }
 type Stopwatch struct{
-  start_time time.Time
+  last_tick_time time.Time
   ticker *time.Ticker
   duration time.Duration
   state SW_STATES
@@ -66,7 +66,7 @@ func InitialModel() model {
       },
     },
     stopwatch: Stopwatch{
-      start_time: time.Now(),
+      last_tick_time: time.Now(),
       state: SW_RUNNING,
     },
   }
@@ -90,19 +90,18 @@ func toggleStopwatchCmd(sw *Stopwatch) tea.Cmd {
     // Now stop the ticker
     debug_logger.Println("Stopping Ticker")
     if sw.ticker != nil {
-      debug_logger.Println("Stopped Ticker")
       sw.ticker.Stop()
     }
     return nil
   case SW_PAUSED:
     sw.state = SW_RUNNING
     //Continue the ticker
-    debug_logger.Println("Start new ticker from paused")
+    sw.last_tick_time = time.Now()
     sw.ticker = time.NewTicker(time.Second)
     return tickCmd(sw.ticker)
   case SW_STOPPED:
     sw.state = SW_RUNNING
-    debug_logger.Println("Start new ticker from stopped")
+    sw.last_tick_time = time.Now()
     sw.ticker = time.NewTicker(time.Second)
     return tickCmd(sw.ticker)
   }
@@ -112,7 +111,8 @@ func toggleStopwatchCmd(sw *Stopwatch) tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
   switch msg := msg.(type) {
   case tickMsg:
-    m.stopwatch.duration = time.Since(m.stopwatch.start_time)
+    m.stopwatch.duration += time.Since(m.stopwatch.last_tick_time)
+    m.stopwatch.last_tick_time = time.Now()
     m.stopwatch.ticker = time.NewTicker(time.Second)
     return m, tickCmd(m.stopwatch.ticker)
   case tea.KeyMsg:
@@ -134,7 +134,7 @@ func (m model) View() string {
   duration := int(m.stopwatch.duration.Seconds())
   duration_clock := clock{hour: duration / 60 / 60, minute: duration / 60 % 60, seconds: duration % 60}
   // Render the clock.
-  final_time_str := duration_clock.get_string()
+  final_time_str := duration_clock.get_string(false)
 
   //Get Terminal Dimensions
   var width, height int

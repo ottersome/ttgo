@@ -51,7 +51,7 @@ func RenderRune(num_array [15]int) [30]rune{
   }
   return string_buffer
 }
-func (c clock) get_string() string {
+func (c clock) get_string(show_seconds bool) string {
   final_time_str := []rune{}
   // We Need to convert 4 digits total. Two from hour, two from minute
   
@@ -66,10 +66,6 @@ func (c clock) get_string() string {
   minute_digit_left := GetNumRender(c.minute/10)
   minute_digit_right := GetNumRender(c.minute%10)
 
-  // Seconds digits: (for later)
-  // second_digit_left := m.currenct_clock.GetString(m.currenct_clock.seconds/10)
-  // second_digit_right := m.currenct_clock.GetString(m.currenct_clock.seconds%10)
-
   // All digits to be consdiered
   tbc := []*[30]rune{
     &hour_digit_left,
@@ -78,15 +74,12 @@ func (c clock) get_string() string {
     &minute_digit_left,
     &minute_digit_right,
   }
-  //offsets will be a map that will map tbc indices to x,y offsets
-  // offsets := map[int][2]int{
-  //   0: [2]int{0,0},
-  //   1: [2]int{0,0},
-  //   2: [2]int{0,0},
-  //   3: [2]int{0,0},
-  //   4: [2]int{0,0},
-  // }
-
+  // Seconds digits
+  if show_seconds {
+    second_digit_left := GetNumRender(c.seconds/10)
+    second_digit_right := GetNumRender(c.seconds%10)
+    tbc = append(tbc,&in_between, &second_digit_left, &second_digit_right)
+  }
   // For each big num we add it one by one:
   num_elements := len(tbc)
   width_elem := 6
