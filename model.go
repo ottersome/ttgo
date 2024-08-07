@@ -48,6 +48,7 @@ func (m model) Init() tea.Cmd {
   m.ticker = time.NewTicker(time.Second)
   return tickCmd(m.ticker)
 }
+
 func tickCmd(ticker *time.Ticker) tea.Cmd {
 	return func() tea.Msg {
 		return tickMsg(<-ticker.C)
@@ -58,7 +59,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
   switch msg := msg.(type) {
   case tickMsg:
     m.duration = time.Since(m.start_time)
-    return m, tickCmd(m.ticker)
+    return m, tickCmd(time.NewTicker(time.Second))
   case tea.KeyMsg:
     switch msg.String() {
     case "q":
