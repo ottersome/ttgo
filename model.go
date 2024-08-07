@@ -14,14 +14,22 @@ const (
   CM_MENU
 )
 
+type SW_STATES int
+const (
+  SW_STOPPED = iota
+  SW_RUNNING
+  SW_PAUSED
+)
+
 type Settings struct{
   clock_size [2]int
+  terminal_colors map[SW_STATES]string
 }
-
 type Stopwatch struct{
   start_time time.Time
   ticker *time.Ticker
   duration time.Duration
+  state SW_STATES
 }
 
 type model struct {
@@ -31,6 +39,12 @@ type model struct {
   stopwatch Stopwatch
 }
 type tickMsg time.Time
+
+//TODO:
+func getTerminalColors(){
+  // Get Terminal Colors
+
+}
 
 func InitialModel() model {
   // Get Current time
@@ -42,9 +56,18 @@ func InitialModel() model {
       minute: cur_time.Minute(),
       seconds: cur_time.Second(),
     },
-    settings: Settings{clock_size: [2]int{5,32}},
+    settings: Settings{
+      clock_size: [2]int{5,32},
+      terminal_colors:
+        map[SW_STATES]string{
+          SW_RUNNING: "#B7E8992",
+          SW_PAUSED: "#ff6666",
+          SW_STOPPED: "#ff6666",
+      },
+    },
     stopwatch: Stopwatch{
       start_time: time.Now(),
+      state: SW_RUNNING,
     },
   }
 }
@@ -60,45 +83,56 @@ func tickCmd(ticker *time.Ticker) tea.Cmd {
 		return tickMsg(<-ticker.C)
 	}
 }
+func toggleStopwatchCmd(sw *Stopwatch) tea.Cmd {
+  switch sw.state {
+  case SW_RUNNING:
+    sw.state = SW_PAUSED
+    // Now stop the ticker
+    debug_logger.Println("Stopping Ticker")
+    if sw.ticker != nil {
+      debug_logger.Println("Stopped Ticker")
+      sw.ticker.Stop()
+    }
+    return nil
+  case SW_PAUSED:
+    sw.state = SW_RUNNING
+    //Continue the ticker
+    debug_logger.Println("Start new ticker from paused")
+    sw.ticker = time.NewTicker(time.Second)
+    return tickCmd(sw.ticker)
+  case SW_STOPPED:
+    sw.state = SW_RUNNING
+    debug_logger.Println("Start new ticker from stopped")
+    sw.ticker = time.NewTicker(time.Second)
+    return tickCmd(sw.ticker)
+  }
+  return nil
+}
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
   switch msg := msg.(type) {
   case tickMsg:
     m.stopwatch.duration = time.Since(m.stopwatch.start_time)
-    return m, tickCmd(time.NewTicker(time.Second))
+    m.stopwatch.ticker = time.NewTicker(time.Second)
+    return m, tickCmd(m.stopwatch.ticker)
   case tea.KeyMsg:
     switch msg.String() {
     case "q":
       return m, tea.Quit
+    case " ":
+      return m, toggleStopwatchCmd(&m.stopwatch)
     }
   }
 
   var cmds []tea.Cmd
-  // for _, choice := range m.choices {
-  //   if _, ok := m.selected[m.cursor]; ok {
-  //     // cmds = append(initialModel)
-  //   } else {
-  //     // cmds = append(cmds, tea.Print(choice + " (unselected)"))
-  //   }
-  // }
-  // cmds = append(cmds, tea.Print(""))
   return m, tea.Batch(cmds...)
 }
 
 
 func (m model) View() string {
-  // Use Clock to get current time
-  // Update the clock
-  // time_now := time.Now()
-  // m.currenct_clock.hour = time_now.Hour()
-  // m.currenct_clock.minute = time_now.Minute()
-  // m.currenct_clock.seconds = time_now.Second()
-
   // New Clock based on ticker
   duration := int(m.stopwatch.duration.Seconds())
-  debug_logger.Println("Duration: ", duration)
   duration_clock := clock{hour: duration / 60 / 60, minute: duration / 60 % 60, seconds: duration % 60}
-  debug_logger.Println("Duration Clock: ", duration_clock)
   // Render the clock.
   final_time_str := duration_clock.get_string()
 
@@ -112,14 +146,22 @@ func (m model) View() string {
       panic(_e)
     }
   }
+  // width = 50
+  // height = 7
 
-  centered := lipgloss.NewStyle().
+  centered_watch := lipgloss.NewStyle().
     Width(width).
     Height(height).
     Align(lipgloss.Center, lipgloss.Center).
     Padding(1).
     Border(lipgloss.RoundedBorder()).
+    Foreground(
+      // Something like ternary depending on sw state
+      lipgloss.Color(
+        m.settings.terminal_colors[m.stopwatch.state],
+      ),
+    ).
     Render(final_time_str)
 
-  return centered
+  return centered_watch
 }

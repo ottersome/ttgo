@@ -92,12 +92,9 @@ func (c clock) get_string() string {
   width_elem := 6
   for r := 0; r < 5; r++ {
     // Print for debugging
-    debug_logger.Println("Element: ", r)
     row_str := []rune{}
     for e := 0; e < num_elements; e++ {
-      debug_logger.Println("About to defere elemet ", e)
       deref := *(tbc[e])
-      debug_logger.Println("Deref: ", deref)
       for j := 0; j < width_elem; j++ {
         row_str = append(row_str, deref[r * width_elem + j])
       }
@@ -106,7 +103,6 @@ func (c clock) get_string() string {
       }
     }
     final_time_str = append(final_time_str, row_str...)
-    debug_logger.Println("Row: ", "Adding newline")
     final_time_str = append(final_time_str, '\n')
   }
   return string(final_time_str[:])
