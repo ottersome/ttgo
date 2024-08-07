@@ -25,8 +25,16 @@ type clock struct {
 
 //CHECK: We are assumign utf-8 for now.
 //Might want to add support for other encodings later.
-var fg_character = []rune{0x2588, 0x2584, 0x2582, 0x2583}
-
+// var fg_character = []rune{0x2588, 0x2584, 0x2582, 0x2583}
+type CONSTITUENT_CHAR rune
+const (
+  FG_CHAR CONSTITUENT_CHAR = 0x2588
+  BG_CHAR CONSTITUENT_CHAR = 0x20
+)
+var CHAR_MAP = map[int]rune{
+  0: rune(BG_CHAR),
+  1: rune(FG_CHAR),
+}//Not so happy with this, but it works for now
 // Dont know, we might want to add more customization rather than just drawing it
 func GetNumRender(num int) [30]rune {
   num_array := BIG_NUMS[num]
@@ -37,7 +45,7 @@ func GetNumRender(num int) [30]rune {
 func RenderRune(num_array [15]int) [30]rune{
   string_buffer := [30]rune{}
   for i := 0; i < 30; i++ {
-    char_to_use := fg_character[num_array[i/2]]
+    char_to_use := CHAR_MAP[num_array[i/2]]
     // Make sure this UTF-8 int can 
     string_buffer[i] = char_to_use
   }
@@ -63,12 +71,12 @@ func (c clock) get_string() string {
   // second_digit_right := m.currenct_clock.GetString(m.currenct_clock.seconds%10)
 
   // All digits to be consdiered
-  tbc := [5][30]rune{
-    hour_digit_left,
-    hour_digit_right,
-    in_between,
-    minute_digit_left,
-    minute_digit_right,
+  tbc := []*[30]rune{
+    &hour_digit_left,
+    &hour_digit_right,
+    &in_between,
+    &minute_digit_left,
+    &minute_digit_right,
   }
   //offsets will be a map that will map tbc indices to x,y offsets
   // offsets := map[int][2]int{
@@ -80,10 +88,26 @@ func (c clock) get_string() string {
   // }
 
   // For each big num we add it one by one:
-  for i := 0; i < 5; i++ {
-    for j := 0; j < 30; j++ {
-      final_time_str = append(final_time_str, tbc[i][j])
+  num_elements := len(tbc)
+  width_elem := 6
+  for r := 0; r < 5; r++ {
+    // Print for debugging
+    debug_logger.Println("Element: ", r)
+    row_str := []rune{}
+    for e := 0; e < num_elements; e++ {
+      debug_logger.Println("About to defere elemet ", e)
+      deref := *(tbc[e])
+      debug_logger.Println("Deref: ", deref)
+      for j := 0; j < width_elem; j++ {
+        row_str = append(row_str, deref[r * width_elem + j])
+      }
+      if e < num_elements-1 && (tbc[e+1] != &in_between || tbc[e] != &in_between){
+        row_str = append(row_str, rune(BG_CHAR))
+      }
     }
+    final_time_str = append(final_time_str, row_str...)
+    debug_logger.Println("Row: ", "Adding newline")
+    final_time_str = append(final_time_str, '\n')
   }
   return string(final_time_str[:])
 }

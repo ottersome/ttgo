@@ -11,9 +11,14 @@ const (
   CM_MENU
 )
 
+type Settings struct{
+  clock_size [2]int
+}
+
 type model struct {
   current_mode MODES
   currenct_clock clock
+  settings Settings
 }
 
 func InitialModel() model {
@@ -22,6 +27,7 @@ func InitialModel() model {
   return model{
     CM_CLOCK,
     clock{hour: cur_time.Hour(), minute: cur_time.Minute(), seconds: cur_time.Second()},
+    Settings{clock_size: [2]int{5,32}},
   }
 }
 
@@ -59,7 +65,8 @@ func (m model) View() string {
   m.currenct_clock.minute = time_now.Minute()
   m.currenct_clock.seconds = time_now.Second()
 
-  // Render the clock
+
+  // Render the clock.
   final_time_str := m.currenct_clock.get_string()
   return final_time_str
 }
