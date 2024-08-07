@@ -18,13 +18,17 @@ type Settings struct{
   clock_size [2]int
 }
 
+type Stopwatch struct{
+  start_time time.Time
+  ticker *time.Ticker
+  duration time.Duration
+}
+
 type model struct {
   current_mode MODES
   current_clock clock
   settings Settings
-  start_time time.Time
-  ticker *time.Ticker
-  duration time.Duration
+  stopwatch Stopwatch
 }
 type tickMsg time.Time
 
@@ -39,14 +43,16 @@ func InitialModel() model {
       seconds: cur_time.Second(),
     },
     settings: Settings{clock_size: [2]int{5,32}},
-    start_time: time.Now(),
+    stopwatch: Stopwatch{
+      start_time: time.Now(),
+    },
   }
 }
 
 func (m model) Init() tea.Cmd {
   //Create Ticker
-  m.ticker = time.NewTicker(time.Second)
-  return tickCmd(m.ticker)
+  m.stopwatch.ticker = time.NewTicker(time.Second)
+  return tickCmd(m.stopwatch.ticker)
 }
 
 func tickCmd(ticker *time.Ticker) tea.Cmd {
@@ -58,7 +64,7 @@ func tickCmd(ticker *time.Ticker) tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
   switch msg := msg.(type) {
   case tickMsg:
-    m.duration = time.Since(m.start_time)
+    m.stopwatch.duration = time.Since(m.stopwatch.start_time)
     return m, tickCmd(time.NewTicker(time.Second))
   case tea.KeyMsg:
     switch msg.String() {
@@ -89,7 +95,7 @@ func (m model) View() string {
   // m.currenct_clock.seconds = time_now.Second()
 
   // New Clock based on ticker
-  duration := int(m.duration.Seconds())
+  duration := int(m.stopwatch.duration.Seconds())
   debug_logger.Println("Duration: ", duration)
   duration_clock := clock{hour: duration / 60 / 60, minute: duration / 60 % 60, seconds: duration % 60}
   debug_logger.Println("Duration Clock: ", duration_clock)
