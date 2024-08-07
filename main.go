@@ -15,7 +15,7 @@ func main() {
     log.Fatal(err)
   }
   debug_logger = log.New(log_file, "DEBUG ", log.Ldate | log.Ltime)
-  p := tea.NewProgram(InitialModel(),tea.WithAltScreen())
+  p := tea.NewProgram(InitialModel())
   if _, err := p.Run(); err != nil {
     fmt.Printf("Error: %v\n", err)
   }

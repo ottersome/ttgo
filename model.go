@@ -20,26 +20,45 @@ type Settings struct{
 
 type model struct {
   current_mode MODES
-  currenct_clock clock
+  current_clock clock
   settings Settings
+  start_time time.Time
+  ticker *time.Ticker
+  duration time.Duration
 }
+type tickMsg time.Time
 
 func InitialModel() model {
   // Get Current time
   cur_time := time.Now()
   return model{
-    CM_CLOCK,
-    clock{hour: cur_time.Hour(), minute: cur_time.Minute(), seconds: cur_time.Second()},
-    Settings{clock_size: [2]int{5,32}},
+    current_mode: CM_CLOCK,
+    current_clock: clock{
+      hour: cur_time.Hour(),
+      minute: cur_time.Minute(),
+      seconds: cur_time.Second(),
+    },
+    settings: Settings{clock_size: [2]int{5,32}},
+    start_time: time.Now(),
   }
 }
 
 func (m model) Init() tea.Cmd {
-  return nil
+  //Create Ticker
+  m.ticker = time.NewTicker(time.Second)
+  return tickCmd(m.ticker)
+}
+func tickCmd(ticker *time.Ticker) tea.Cmd {
+	return func() tea.Msg {
+		return tickMsg(<-ticker.C)
+	}
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
   switch msg := msg.(type) {
+  case tickMsg:
+    m.duration = time.Since(m.start_time)
+    return m, tickCmd(m.ticker)
   case tea.KeyMsg:
     switch msg.String() {
     case "q":
@@ -63,14 +82,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
   // Use Clock to get current time
   // Update the clock
-  time_now := time.Now()
-  m.currenct_clock.hour = time_now.Hour()
-  m.currenct_clock.minute = time_now.Minute()
-  m.currenct_clock.seconds = time_now.Second()
+  // time_now := time.Now()
+  // m.currenct_clock.hour = time_now.Hour()
+  // m.currenct_clock.minute = time_now.Minute()
+  // m.currenct_clock.seconds = time_now.Second()
 
-
+  // New Clock based on ticker
+  duration := int(m.duration.Seconds())
+  debug_logger.Println("Duration: ", duration)
+  duration_clock := clock{hour: duration / 60 / 60, minute: duration / 60 % 60, seconds: duration % 60}
+  debug_logger.Println("Duration Clock: ", duration_clock)
   // Render the clock.
-  final_time_str := m.currenct_clock.get_string()
+  final_time_str := duration_clock.get_string()
 
   //Get Terminal Dimensions
   var width, height int
