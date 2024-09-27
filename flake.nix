@@ -1,28 +1,29 @@
-# We need to create a package for this go project:
 {
-  description = "A simple stopwatch written in Go";
+  description = "TTGO: Simple time and task tracker.";
+
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   inputs.flake-utils.url = "github:numtide/flake-utils";
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = nixpkgs.legacyPackages.${system};
-        lib = pkgs.lib;
-      in
-      {
-        # Make a package for installation as a flake
-        packages.ttgo = pkgs.buildGoModule {
-          name = "ttgo";
-          src = ./.;
-          
-          vendorSha256 = lib.fakeSha256;
-          # vendorHash = "3f31691070c01bfc482d2524566aebc73496023b";
-          meta = with lib; {
-            description = "Go Time Tracker";
-            homepage    = "https://github.com/ottersome/ttgo";
-            maintainers = [ "ottersome" ];
+  inputs.gomod2nix.url = "github:nix-community/gomod2nix";
+  inputs.gomod2nix.inputs.nixpkgs.follows = "nixpkgs";
+  inputs.gomod2nix.inputs.flake-utils.follows = "flake-utils";
+
+  outputs = { self, nixpkgs, flake-utils, gomod2nix }:
+    (flake-utils.lib.eachDefaultSystem
+      (system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+
+          # The current default sdk for macOS fails to compile go projects, so we use a newer one for now.
+          # This has no effect on other platforms.
+          callPackage = pkgs.darwin.apple_sdk_11_0.callPackage or pkgs.callPackage;
+        in
+        {
+          packages.ttgo = callPackage ./. {
+            inherit (gomod2nix.legacyPackages.${system}) buildGoApplication;
           };
-        };
-      }
+          devShells.default = callPackage ./shell.nix {
+            inherit (gomod2nix.legacyPackages.${system}) mkGoEnv gomod2nix;
+          };
+        })
     );
 }
