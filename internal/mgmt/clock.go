@@ -1,4 +1,4 @@
-package main
+package mgmt
 
 var BIG_NUMS = [10][15]int{
   {1,1,1,1,0,1,1,0,1,1,0,1,1,1,1}, /* 0 */

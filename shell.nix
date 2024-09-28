@@ -12,6 +12,7 @@
 , mkGoEnv ? pkgs.mkGoEnv
 , gomod2nix ? pkgs.gomod2nix
 , gopls ? pkgs.gopls
+, git ? pkgs.gopls
 }:
 
 let
@@ -22,12 +23,13 @@ pkgs.mkShell {
     goEnv
     gomod2nix
     gopls # Language Server
+    git 
   ];
   shellHook = ''
-    # Run in zsh rather than bash
-    export SHELL=zsh
+    # Get pkgs path to zsh
+    export SHELL=${pkgs.zsh}/bin/zsh
     export INFLAKE=1
-    export GOPATH=$PWD
+    # export GOPATH=$PWD
     export PATH=$PATH:$GOPATH/bin
     # Now actually enter zsh
     exec zsh

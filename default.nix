@@ -15,7 +15,8 @@
 buildGoApplication {
   pname = "ttgo";
   version = "0.1";
+  # pwd = ./.;
   pwd = ./.;
-  src = ./.;
+  src = ./cmd/client;
   modules = ./gomod2nix.toml;
 }

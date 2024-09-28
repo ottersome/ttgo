@@ -1,4 +1,4 @@
-package main
+package mgmt
 
 import (
   "github.com/charmbracelet/bubbletea"
@@ -87,8 +87,6 @@ func toggleStopwatchCmd(sw *Stopwatch) tea.Cmd {
   switch sw.state {
   case SW_RUNNING:
     sw.state = SW_PAUSED
-    // Now stop the ticker
-    debug_logger.Println("Stopping Ticker")
     if sw.ticker != nil {
       sw.ticker.Stop()
     }
